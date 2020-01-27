@@ -6,6 +6,8 @@ const getSelectorBoxSize = require('./get-selector-box-size');
 const getStories = require('./get-stories');
 const awaitLokiReady = require('./await-loki-ready');
 const addLokiSessionMarker = require('./add-loki-session-marker');
+const {warn} = require('../../console');
+
 const {
   withTimeout,
   TimeoutError,
@@ -66,9 +68,15 @@ function createChromeTarget(
 
         const maybeFulfillPromise = () => {
           if (pageLoaded && Object.keys(pendingRequestURLMap).length === 0) {
-            if (failedURLs.length !== 0) {
-              reject(new FetchingURLsError(failedURLs));
-            } else {
+            const fetchedUrlError =
+              failedURLs.length !== 0 && new FetchingURLsError(failedURLs);
+              const warnOnFailedFetch = true;
+              if (!warnOnFailedFetch && fetchedUrlError) {
+                reject(fetchedUrlError);
+              } else {
+              if (fetchedUrlError) {
+                warn(`WARNING: ${fetchedUrlError.message}`);
+              }
               // In some cases such as fonts further requests will only happen after the page has been fully rendered
               if (stabilizationTimer) {
                 clearTimeout(stabilizationTimer);
